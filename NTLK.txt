@@ -1,0 +1,37 @@
+import nltk
+import spacy
+import pandas as pd
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import PorterStemmer, WordNetLemmatizer
+
+# Download required NLTK data
+for item in ['punkt', 'punkt_tab', 'stopwords', 'wordnet',
+             'averaged_perceptron_tagger_eng']:
+    nltk.download(item, quiet=True)
+
+nlp = spacy.load("en_core_web_sm")
+
+text = "Students are learning NLP. They are developing useful applications."
+
+# NLTK
+tokens = word_tokenize(text)
+words = [w for w in tokens
+         if w.isalpha() and w.lower() not in stopwords.words('english')]
+
+stemmer = PorterStemmer()
+lemmatizer = WordNetLemmatizer()
+
+print("NLTK Tokens:", tokens)
+print("After Stopword Removal:", words)
+print("Stemming:", [stemmer.stem(w) for w in words])
+print("Lemmatization:", [lemmatizer.lemmatize(w) for w in words])
+print("NLTK POS:", nltk.pos_tag(words))
+
+# spaCy
+doc = nlp(text)
+data = [(t.text, t.lemma_, t.pos_)
+        for t in doc if t.is_alpha and not t.is_stop]
+
+print("\nspaCy (Word, Lemma, POS):")
+print(pd.DataFrame(data, columns=["Word", "Lemma", "POS"]))

@@ -1,0 +1,30 @@
+import re
+
+text = """
+Patient has fever and headache.
+Prescribed Paracetamol 500 mg.
+Diagnosis: asthma.
+"""
+
+# Extract entities
+drugs = re.findall(
+    r"\b(Amoxicillin|Lisinopril|Metformin|Paracetamol|Ibuprofen|Aspirin)\b",
+    text, re.I
+)
+
+dosages = re.findall(r"\b\d+\s*(?:mg|g|ml)\b", text, re.I)
+
+diagnoses = re.findall(
+    r"\b(hypertension|diabetes mellitus|type 2 diabetes|fever|asthma)\b",
+    text, re.I
+)
+
+symptoms = re.findall(
+    r"\b(dizziness|nausea|headache|pain|cough)\b",
+    text, re.I
+)
+
+print("Drugs:", drugs)
+print("Dosages:", dosages)
+print("Diagnoses:", diagnoses)
+print("Symptoms:", symptoms)

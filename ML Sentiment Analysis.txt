@@ -1,0 +1,75 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.pipeline import make_pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score
+
+# 1. Load CSV dataset
+df = pd.read_csv("dataset.csv")  # CHANGE HERE: enter your CSV filename
+
+print("Dataset:")
+print(df.head())
+print("Available columns:", df.columns.tolist())
+
+# 2. Select the text/review column and sentiment/label column
+# CHANGE HERE: select the column containing reviews or text.
+# Example: df.columns[0] means the first column. You can instead use the exact CSV header.
+TEXT_COLUMN = df.columns[0]
+
+# CHANGE HERE: select the column containing sentiment/class labels.
+# Example below selects the second column; change the index/header if needed.
+LABEL_COLUMN = df.columns[1]
+
+df = df.dropna(subset=[TEXT_COLUMN, LABEL_COLUMN]).copy()
+reviews = df[TEXT_COLUMN].astype(str).tolist()
+labels = df[LABEL_COLUMN].tolist()
+
+# If labels are Positive/Negative words, encode them as 1/0.
+if set(pd.Series(labels).astype(str).str.lower().unique()) <= {"positive", "negative"}:
+    labels = [1 if str(x).lower() == "positive" else 0 for x in labels]
+
+if len(set(labels)) != 2:
+    raise ValueError("This example expects exactly two sentiment classes.")
+
+# 3. Split data
+X_train, X_test, y_train, y_test = train_test_split(
+    reviews, labels, test_size=0.25, random_state=42, stratify=labels
+)
+
+# 4. Three ML models
+models = {
+    "Logistic Regression": LogisticRegression(max_iter=1000),
+    "Naive Bayes": MultinomialNB(),
+    "SVM": SVC(probability=True, random_state=42)
+}
+
+# 5. Train and evaluate
+for name, model in models.items():
+    clf = make_pipeline(TfidfVectorizer(), model)
+    clf.fit(X_train, y_train)
+
+    pred = clf.predict(X_test)
+    prob = clf.predict_proba(X_test)[:, 1]
+
+    print("\nModel:", name)
+    print("Accuracy:", accuracy_score(y_test, pred))
+    print("Confusion Matrix:\n", confusion_matrix(y_test, pred))
+
+    try:
+        print("ROC-AUC:", roc_auc_score(y_test, prob))
+    except ValueError:
+        print("ROC-AUC cannot be calculated for this test split.")
+
+# 6. Test a new review
+new_review = ["This movie was fantastic and enjoyable"]
+best_model = make_pipeline(
+    TfidfVectorizer(), LogisticRegression(max_iter=1000)
+)
+best_model.fit(X_train, y_train)
+
+result = best_model.predict(new_review)[0]
+print("\nNew Review:", new_review[0])
+print("Predicted Sentiment:", result)

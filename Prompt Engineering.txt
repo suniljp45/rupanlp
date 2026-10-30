@@ -1,0 +1,63 @@
+# Assignment 10: Prompt Engineering for LLMs
+# Problem: Create Zero-Shot, One-Shot, Few-Shot and structured reasoning prompts
+# to summarize a legal contract and identify risk clauses.
+# No external dataset or extra library is required.
+
+contract = (
+    "The Receiving Party must keep confidential information secret for 5 years. "
+    "Liability shall not exceed $10 million."
+)
+
+zero_shot = f"""
+Analyze this contract. Summarize it and identify risk clauses.
+Contract: {contract}
+Output: summary, confidentiality term, liability cap, risks.
+"""
+
+one_shot = f"""
+Example:
+Contract: Confidentiality lasts 2 years. Liability is capped at $1M.
+Output: Confidentiality: 2 years. Liability cap: $1M.
+
+Now analyze:
+Contract: {contract}
+Output:
+"""
+
+few_shot = f"""
+Example 1:
+Contract: Confidentiality lasts 3 years.
+Output: Confidentiality term: 3 years.
+
+Example 2:
+Contract: Liability is capped at $2M.
+Output: Liability cap: $2M.
+
+Now analyze:
+Contract: {contract}
+Output:
+"""
+
+cot = f"""
+Review the contract and check:
+1. Main obligations of the parties.
+2. Confidentiality duration.
+3. Financial liability limit.
+4. Important risks.
+Then provide a short final summary based only on the text.
+
+Contract: {contract}
+Final answer:
+"""
+
+for title, prompt in [
+    ("ZERO-SHOT", zero_shot),
+    ("ONE-SHOT", one_shot),
+    ("FEW-SHOT", few_shot),
+    ("STRUCTURED REASONING", cot)
+]:
+    print("\\n---", title, "PROMPT ---")
+    print(prompt)
+
+# This prints prompt templates. To receive generated answers, submit a prompt
+# to an LLM such as ChatGPT or another available model.

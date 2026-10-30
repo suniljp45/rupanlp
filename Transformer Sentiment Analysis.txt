@@ -1,0 +1,45 @@
+import pandas as pd
+
+# 1. Load CSV dataset
+df = pd.read_csv("dataset.csv")  # CHANGE HERE: enter your CSV filename
+
+print("Dataset:")
+print(df.head())
+print("Available columns:", df.columns.tolist())
+
+# 2. Select the column containing posts/reviews/text
+# CHANGE HERE: choose the text column from your CSV.
+# Example: df.columns[0] means the first column. You can instead use the exact CSV header.
+TEXT_COLUMN = df.columns[0]
+
+# CHANGE HERE (optional): if your CSV has a language column, select its column here.
+# If there is no language column, keep LANGUAGE_COLUMN = None.
+LANGUAGE_COLUMN = None
+
+df = df.dropna(subset=[TEXT_COLUMN]).copy()
+posts = df[TEXT_COLUMN].astype(str).tolist()
+
+if LANGUAGE_COLUMN is not None:
+    languages = df[LANGUAGE_COLUMN].fillna("Unknown").astype(str).tolist()
+else:
+    languages = ["Unknown"] * len(posts)
+
+try:
+    from transformers import pipeline
+
+    # Multilingual sentiment model; internet may be required on first run.
+    classifier = pipeline(
+        "sentiment-analysis",
+        model="cardiffnlp/twitter-xlm-roberta-base-sentiment"
+    )
+
+    results = classifier(posts)
+
+    print("\nLanguage | Post | Sentiment | Confidence")
+    for lang, post, result in zip(languages, posts, results):
+        print(lang, "|", post, "|", result["label"], "|",
+              round(result["score"], 3))
+
+except Exception as e:
+    print("Transformer model unavailable:", e)
+    print("Install transformers and torch, and check internet/model access.")

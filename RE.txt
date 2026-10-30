@@ -1,0 +1,42 @@
+import re
+
+class TextCleaner:
+    EMAIL = r'[\w.+-]+@[\w-]+\.[\w.-]+'
+    URL = r'https?://\S+|www\.\S+'
+    PHONE = r'\+?\d[\d\s()-]{7,}\d'
+    HTML = r'<[^>]+>'
+
+    def clean_emails(self, text):
+        return re.findall(self.EMAIL, text)
+
+    def clean_urls(self, text):
+        return re.findall(self.URL, text)
+
+    def clean_phones(self, text):
+        phones = re.findall(self.PHONE, text)
+        return [re.sub(r'[^\d+]', '', p) for p in phones]
+
+    def clean_html(self, text):
+        return re.sub(self.HTML, '', text)
+
+    def clean_all(self, text):
+        text = self.clean_html(text)
+        text = re.sub(self.URL, '[URL]', text)
+        text = re.sub(self.EMAIL, '[EMAIL]', text)
+        text = re.sub(r'@\w+', '[USER]', text)
+        text = re.sub(r'#\w+', '', text)
+        text = re.sub(r'[^a-zA-Z0-9\s\[\]]', ' ', text)
+        return re.sub(r'\s+', ' ', text).strip().lower()
+
+
+text = """<p>Hello @rahul! Email test@example.com.
+Visit https://example.com and call +91-98765-43210.
+Welcome to #NLP</p>"""
+
+c = TextCleaner()
+
+print("Emails:", c.clean_emails(text))
+print("URLs:", c.clean_urls(text))
+print("Phones:", c.clean_phones(text))
+print("Without HTML:", c.clean_html(text))
+print("Cleaned Text:", c.clean_all(text))

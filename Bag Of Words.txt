@@ -1,0 +1,79 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import math
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+
+# 1. Load CSV dataset
+df = pd.read_csv("dataset.csv")  # CHANGE HERE: enter your CSV filename
+
+print("Dataset:")
+print(df.head())
+print("Available columns:", df.columns.tolist())
+
+# 2. Select the text and category columns
+# CHANGE HERE: choose the column containing the text/documents.
+# Example: df.columns[0] means the first column. You can instead write "your exact CSV header".
+TEXT_COLUMN = df.columns[0]
+
+# CHANGE HERE: choose the column containing categories/labels.
+# If your CSV has no category/label column, keep CATEGORY_COLUMN = None.
+CATEGORY_COLUMN = df.columns[1] if len(df.columns) > 1 else None
+
+df = df.dropna(subset=[TEXT_COLUMN]).copy()
+corpus = df[TEXT_COLUMN].astype(str).tolist()
+
+if CATEGORY_COLUMN is not None:
+    labels = df[CATEGORY_COLUMN].fillna("Unknown").astype(str).tolist()
+else:
+    labels = ["All Documents"] * len(corpus)
+
+# 3. Bag of Words from scratch
+words = sorted(set(w for d in corpus for w in d.lower().split()))
+bow = [[d.lower().split().count(w) for w in words] for d in corpus]
+
+print("\nVocabulary:", words)
+print("\nBoW Matrix:\n", np.array(bow))
+
+# 4. TF-IDF from scratch
+N = len(corpus)
+tfidf = []
+
+for d in corpus:
+    doc_words = d.lower().split()
+    row = []
+    for w in words:
+        tf = doc_words.count(w) / len(doc_words) if doc_words else 0
+        df_count = sum(1 for doc in corpus if w in doc.lower().split())
+        idf = math.log((1 + N) / (1 + df_count)) + 1
+        row.append(tf * idf)
+    tfidf.append(row)
+
+print("\nTF-IDF Matrix:\n", np.round(tfidf, 2))
+
+# 5. Verify using scikit-learn
+cv = CountVectorizer()
+bow_sk = cv.fit_transform(corpus)
+
+tv = TfidfVectorizer()
+tfidf_sk = tv.fit_transform(corpus)
+
+print("\nSklearn BoW Shape:", bow_sk.shape)
+print("Sklearn TF-IDF Shape:", tfidf_sk.shape)
+
+# 6. Top keywords and bar chart for each category
+features = tv.get_feature_names_out()
+
+for label in sorted(set(labels)):
+    ids = [i for i in range(len(labels)) if labels[i] == label]
+    scores = np.asarray(tfidf_sk[ids].mean(axis=0)).ravel()
+    top = scores.argsort()[-5:][::-1]
+
+    print(label, "Top Keywords:", features[top])
+
+    plt.figure()
+    plt.bar(features[top], scores[top])
+    plt.title("Top Keywords - " + label)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()

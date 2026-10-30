@@ -1,0 +1,44 @@
+# Assignment 11: RAG-Based Document Question Answering
+# Problem: Retrieve the most relevant university handbook section for a query.
+# Install: %pip install scikit-learn
+# A small sample handbook is included; no external document is required.
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+handbook = """
+SECTION Exam Schedule
+End-semester examinations commence on December 1.
+Hall tickets are available 7 days before examinations.
+
+SECTION Hostel Rules
+Hostel curfew is 10:00 PM.
+Visitors are allowed in the common lounge from 4:00 PM to 7:00 PM.
+
+SECTION Admissions
+Postgraduate admission requires at least 60 percent in an undergraduate degree
+and a valid national entrance exam percentile.
+"""
+
+chunks = [x.strip() for x in handbook.split("SECTION") if x.strip()]
+vectorizer = TfidfVectorizer(stop_words="english")
+doc_vectors = vectorizer.fit_transform(chunks)
+
+queries = [
+    "When do end-semester examinations start?",
+    "What is the hostel curfew time?",
+    "What are postgraduate admission requirements?"
+]
+
+for query in queries:
+    q_vector = vectorizer.transform([query])
+    scores = cosine_similarity(q_vector, doc_vectors)[0]
+    best = scores.argmax()
+
+    print("\\nQuestion:", query)
+    print("Retrieved context:", chunks[best])
+    print("Similarity score:", round(scores[best], 3))
+    print("Answer based on context:", chunks[best])
+
+# This is a simple retrieval/context-grounding demo. It does not call an LLM
+# to generate a new answer and does not calculate ROUGE/BLEU scores.
